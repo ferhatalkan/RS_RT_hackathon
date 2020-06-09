@@ -9,14 +9,18 @@ def RNAplfold_parser(dpfile):
     with open(dpfile) as in_f:
         lines = in_f.readlines()
     i = 0
-    seqlen = None
+    seq = ''
     bps = []
     while i<len(lines):
         line = lines[i]
-        if (str(line[1:8])=="winSize") and str(line.rstrip().split()[2])=="def":
-            seqlen = int(line.split()[1])
-            for k in range(seqlen):
-                bps.append([0]*seqlen)
+        if line[1:9]=="sequence":
+            while lines[i+1].startswith(") } def")==False:
+                i += 1
+                line = lines[i]
+                seq += re.sub('\\\n','',line.replace('\\','')).translate(str.maketrans('ACGTUacgtu','ACGTTACGTT'))
+
+            for k in range(len(seq)):
+                bps.append([0]*len(seq))
 
         elif lines[i].startswith("%start of base pair probability data"):
             while lines[i+1].startswith("showpage")==False:
@@ -40,7 +44,7 @@ def main():
     #parser.add_argument('-s','--structuredness', type=str, help="Store structuredness of every position to the given output file. (Space seperated values (Total, 5'bps, 3'bps) in each row (for every position))")
     args = parser.parse_args()
 
-    print(RNAplfold_parser(args.RNAplfold_dp_ps_file))
+    print(args.RNAplfold_dp_ps_file,len(RNAplfold_parser(args.RNAplfold_dp_ps_file)))
 
 # Run the main when executed
 if __name__ == "__main__":
