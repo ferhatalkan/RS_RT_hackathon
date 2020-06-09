@@ -3,6 +3,7 @@
 
 # The script that parses .ps file of RNAplfold output and reports them in a packed format of your choice
 import sys, argparse, re
+from statistics import mean
 
 def RNAplfold_parser(dpfile):
     lines = []
@@ -36,6 +37,20 @@ def RNAplfold_parser(dpfile):
         i += 1
     return bps
 
+def get_str_feature(BPmatrix, CDSs, CDSe, w=50, maxW=200, inside=False):
+    result = []
+    seqlen = len(BPmatrix)
+
+    allsums = []
+    for i in range(0, min((CDSe+100),seqlen)-1):
+        if inside == False:
+            allsums.append(sum(BPmatrix[i][i:min(i+maxW, seqlen)]))
+        elif inside == True:
+            allsums.append(sum(BPmatrix[i][i:min(i+w, i+maxW, seqlen)]))
+
+    for cod_i in range(int((CDSe-CDSs)/3)):
+        result.append(mean([allsums[nt_i] for nt_i in range(min(CDSs+(cod_i*3)+16, seqlen), min(CDSs+(cod_i*3)+15+w, seqlen))]))
+    return(result)
 
 def main():
     parser = argparse.ArgumentParser(description='Parse RNAplfold _dp.ps output.')
@@ -44,7 +59,9 @@ def main():
     #parser.add_argument('-s','--structuredness', type=str, help="Store structuredness of every position to the given output file. (Space seperated values (Total, 5'bps, 3'bps) in each row (for every position))")
     args = parser.parse_args()
 
-    print(args.RNAplfold_dp_ps_file,len(RNAplfold_parser(args.RNAplfold_dp_ps_file)))
+    SM = RNAplfold_parser(args.RNAplfold_dp_ps_file)
+    print(get_str_feature(SM, 425, 1816))
+    print(get_str_feature(SM, 425, 1816, inside=True))
 
 # Run the main when executed
 if __name__ == "__main__":
